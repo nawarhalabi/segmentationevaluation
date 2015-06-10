@@ -1,0 +1,3 @@
+# Evaluating Arabic speech corpus's segmentation accuracy
+
+This software reads data from Praat Text Grids and calculates the accuracy of segmentations given the corrected segmentations. It calculates the average deltas and the STD of the deltas, as well as the number of positive and negative deltas. mainly this software is used to calculate the number and percentage of boundaries within different interval limits.

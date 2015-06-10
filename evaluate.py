@@ -15,7 +15,18 @@ phones = ["AH", "r", "g", "y", "u0", "i1",
 "H", "D", "m", "aa", "A", "UU1",
 "x", "T", "n", "uu0", "U0", "II1",
 "d", "Z", "h", "ii0", "I0", "sil", 
-"TH", "E", "w", "a", "u1", "sp", "^"]
+"TH", "E", "w", "a", "u1", "sp", "^",
+
+"AHAH", "rr", "gg", "yy",
+"bb", "zz", "ff", "vv",
+"tt", "ss", "qq", "pp",
+"SHSH", "kk", "GG",
+"jj", "SS", "ll",  "dd", "JJ",
+"HH", "DD", "mm",
+"xx", "TT", "nn",
+"dd", "ZZ", "hh", 
+"THTH", "EE", "ww", "^^"
+]
 
 consonants = ["AH", "r", "g", "y",
 "b", "z", "f", "v",
@@ -25,7 +36,17 @@ consonants = ["AH", "r", "g", "y",
 "H", "D", "m",
 "x", "T", "n",
 "d", "Z", "h", 
-"TH", "E", "w", "^"]
+"TH", "E", "w", "^",
+"AHAH", "rr", "gg", "yy",
+"bb", "zz", "ff", "vv",
+"tt", "ss", "qq", "pp",
+"SHSH", "kk", "GG",
+"jj", "SS", "ll",  "dd", "JJ",
+"HH", "DD", "mm",
+"xx", "TT", "nn",
+"dd", "ZZ", "hh", 
+"THTH", "EE", "ww", "^^"
+]
 
 vowels = ["aa", "A", "UU1", "II1",
 "uu0", "U0", "II0", "I1",
@@ -33,13 +54,24 @@ vowels = ["aa", "A", "UU1", "II1",
 "a", "u1", "AA", "ii1",
 "i0", "uu1", "u0", "i1"]
 
-stops = ["AH", "b", "t", "T", "b", "p", "d", "D", "k" , "q", "J", "G"]
-fricVoiced = ["v", "TH", "z", "Z", "j", "g", "E"]
-fricVoiceless = ["f", "S", "s", "^", "SH", "x", "H", "h"]
-nasals = ["m", "n"]
-trill = ["r"]
-approx = ["w", "y", "l"]
-
+stops = ["AH", "b", "t", "T", "b", "p", "d", "D", "k" , "q", "J", "G",
+"AHAH", "bb", "tt", "TT", "bb", "pp", "dd", "DD", "kk" , "qq", "JJ", "GG"
+]
+fricVoiced = ["v", "TH", "z", "Z", "j", "g", "E",
+"vv", "THTH", "zz", "ZZ", "jj", "gg", "EE"
+]
+fricVoiceless = ["f", "S", "s", "^", "SH", "x", "H", "h",
+"ff", "SS", "ss", "^^", "SHSH", "xx", "HH", "hh"
+]
+nasals = ["m", "n",
+"mm", "nn"
+]
+trill = ["r",
+"rr"
+]
+approx = ["w", "y", "l",
+"ww", "yy", "ll"
+]
 pause = ["sil", "sp"]
 
 types = {"phones": phones, "consonants" : consonants, "vowels": vowels, "stops": stops, "fricVoiced": fricVoiced, "fricVoiceless": fricVoiceless, "nasals": nasals, "trill": trill, "approx": approx, "pause": pause}
@@ -108,7 +140,8 @@ for file in glob.glob(os.path.join(corDir, '*.TextGrid')): #Read corrected bound
 #--------------------------------------------------------------------------------------------------------------------------
 #Calculate stats-----------------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------------
-	
+skips = 0
+total = 0
 for fileName in cor: #Start calculating histograms
 	if(fileName in org):
 		orgUtt = org[fileName]
@@ -117,36 +150,74 @@ for fileName in cor: #Start calculating histograms
 		corPos = 0
 		while orgPos < len(orgUtt) - 1 and corPos < len(corUtt) - 1:
 			delta = orgUtt[orgPos][1] - corUtt[corPos][1]
-			if(math.fabs(delta) < 0.06):
-				if(orgUtt[orgPos][0] == corUtt[corPos][0] and orgUtt[orgPos + 1][0] == corUtt[corPos + 1][0]):
-					for type1 in types: #For all boundary types, add the delta to the statistics
-						for type2 in types: #---------------------------------------------------
-							if(orgUtt[orgPos][0] in types[type1] and orgUtt[orgPos + 1][0] in types[type2]): #--
-								deltas[type1 + "-" + type2][0] += delta
-								deltas[type1 + "-" + type2][1] += 1
-								if(delta > 0):
-									deltas[type1 + "-" + type2][2] += 1
-								if(delta < 0):
-									deltas[type1 + "-" + type2][3] += 1
-								deltas[type1 + "-" + type2][4] += delta * delta
-								
-								index = int(math.fabs(delta) / 0.005) #The delta divided by .005 determines the boundary accuracy
-								if(index < len(histos[type1 + "-" + type2])):
-									histos[type1 + "-" + type2][index] += 1
-								else: #All boundaries greater than a certain threshold are added to the last entry of the histogram. This is determined by the length of the list (see if statement above)
-									histos[type1 + "-" + type2][-1] += 1
+			total += 1
+			if(orgUtt[orgPos][0] == corUtt[corPos][0] and orgUtt[orgPos + 1][0] == corUtt[corPos + 1][0]):
+				#if(math.fabs(delta) < 0.08 ):
+				for type1 in types: #For all boundary types, add the delta to the statistics
+					for type2 in types: #---------------------------------------------------
+						if(orgUtt[orgPos][0] in types[type1] and orgUtt[orgPos + 1][0] in types[type2]): #--
+							deltas[type1 + "-" + type2][0] += delta
+							deltas[type1 + "-" + type2][1] += 1
+							if(delta > 0):
+								deltas[type1 + "-" + type2][2] += 1
+							if(delta < 0):
+								deltas[type1 + "-" + type2][3] += 1
+							deltas[type1 + "-" + type2][4] += delta * delta
+							
+							index = int(math.fabs(delta) / 0.00500000000000001) #The delta divided by .005 determines the boundary accuracy
+							if(index < len(histos[type1 + "-" + type2])):
+								for i in range(index, len(histos[type1 + "-" + type2])):
+									histos[type1 + "-" + type2][i] += 1
+							else: #All boundaries greater than a certain threshold are added to the last entry of the histogram. This is determined by the length of the list (see if statement above)
+								histos[type1 + "-" + type2][-1] += 1
+				print corUtt[corPos][0] + " " + corUtt[corPos + 1][0]
+				print orgUtt[orgPos][0] + " " + orgUtt[orgPos + 1][0]
+				print "----"
 				orgPos += 1
 				corPos += 1
-			elif delta < -0.06: #If correction is too big then attempt to increase the original or correct boundaries lists pointers to restart comparing
+				#elif delta <= -0.06: #If correction is too big then attempt to increase the original or correct boundaries lists pointers to restart comparing
+				#	orgPos += 1
+				#	skips += 1
+				#else:
+				#	corPos += 1
+				#	skips += 1
+			elif(orgUtt[orgPos + 1][0] == corUtt[corPos + 1][0]):
 				orgPos += 1
+				corPos += 1
+				skips += 1
 			else:
-				corPos += 1
-
+				if delta > 0:
+					print corUtt[corPos][0] + " " + corUtt[corPos + 1][0]
+					print orgUtt[orgPos][0] + " " + orgUtt[orgPos + 1][0]
+					print "skip corPos " + str(corPos)
+					corPos += 1
+					skips += 1
+				else:
+					print corUtt[corPos][0] + " " + corUtt[corPos + 1][0]
+					print orgUtt[orgPos][0] + " " + orgUtt[orgPos + 1][0]
+					print "skip orgPos " + str(orgPos)
+					orgPos += 1
+					
+				
+res = "Boundary Type, .005, .010, .015, .020, .025, .030, .035, .040, .045, .050, >.050, Average Delta, Number of Boundaries, Number of Positive Deltas, Number of Negative Deltas, STD of Delta\n"
 for key in histos:
-	print key
-	print histos[key]
+	res += key + ", "
+	
+	sumH = deltas[key][1]
+	if sumH == 0:
+		sumH = 1
+	
+	res += ", ".join(str(x / float(sumH)) for x in histos[key]) + ", "
 	if(deltas[key][1] != 0):
 		deltas[key][0] = float(deltas[key][0]) / float(deltas[key][1])
 		deltas[key][4] = (float(deltas[key][4]) / float(deltas[key][1])) - (deltas[key][0] * deltas[key][0])
-	print deltas[key]
+	res += ", ".join(str(x) for x in deltas[key])
+	res += "\n"
+	
+f = open("results.csv", 'w')
+f.write(res)
+f.close()
+
+print str(skips) + " skips"
+print str(total) + " phones"
 	
