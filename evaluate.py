@@ -152,7 +152,6 @@ for fileName in cor: #Start calculating histograms
 			delta = orgUtt[orgPos][1] - corUtt[corPos][1]
 			total += 1
 			if(orgUtt[orgPos][0] == corUtt[corPos][0] and orgUtt[orgPos + 1][0] == corUtt[corPos + 1][0]):
-				#if(math.fabs(delta) < 0.08 ):
 				for type1 in types: #For all boundary types, add the delta to the statistics
 					for type2 in types: #---------------------------------------------------
 						if(orgUtt[orgPos][0] in types[type1] and orgUtt[orgPos + 1][0] in types[type2]): #--
@@ -170,35 +169,21 @@ for fileName in cor: #Start calculating histograms
 									histos[type1 + "-" + type2][i] += 1
 							else: #All boundaries greater than a certain threshold are added to the last entry of the histogram. This is determined by the length of the list (see if statement above)
 								histos[type1 + "-" + type2][-1] += 1
-				print corUtt[corPos][0] + " " + corUtt[corPos + 1][0]
-				print orgUtt[orgPos][0] + " " + orgUtt[orgPos + 1][0]
-				print "----"
 				orgPos += 1
 				corPos += 1
-				#elif delta <= -0.06: #If correction is too big then attempt to increase the original or correct boundaries lists pointers to restart comparing
-				#	orgPos += 1
-				#	skips += 1
-				#else:
-				#	corPos += 1
-				#	skips += 1
-			elif(orgUtt[orgPos + 1][0] == corUtt[corPos + 1][0]):
+			elif(orgUtt[orgPos + 1][0] == corUtt[corPos + 1][0]): #Skip to the next phone of both the correct and original alignments have the same phone next
 				orgPos += 1
 				corPos += 1
 				skips += 1
-			else:
+			else: #Increase corrected or the original Pointer to try and regain alignment if lost due to changes
 				if delta > 0:
-					print corUtt[corPos][0] + " " + corUtt[corPos + 1][0]
-					print orgUtt[orgPos][0] + " " + orgUtt[orgPos + 1][0]
-					print "skip corPos " + str(corPos)
 					corPos += 1
 					skips += 1
 				else:
-					print corUtt[corPos][0] + " " + corUtt[corPos + 1][0]
-					print orgUtt[orgPos][0] + " " + orgUtt[orgPos + 1][0]
-					print "skip orgPos " + str(orgPos)
 					orgPos += 1
-					
-				
+#--------------------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------
+#Print result out----------------------------------------------------------------------------------------------------------------
 res = "Boundary Type, .005, .010, .015, .020, .025, .030, .035, .040, .045, .050, >.050, Average Delta, Number of Boundaries, Number of Positive Deltas, Number of Negative Deltas, STD of Delta\n"
 for key in histos:
 	res += key + ", "
@@ -220,4 +205,3 @@ f.close()
 
 print str(skips) + " skips"
 print str(total) + " phones"
-	
