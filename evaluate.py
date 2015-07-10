@@ -7,7 +7,7 @@ import re
 import glob, os
 import math
 
-consonants = ["AH", "r", "g", "y",
+consonants = ["AH", "r", "g", "y", "Ah",
 "b", "z", "f", "v",
 "t", "s", "q", "p",
 "SH", "k", "G", "J",
@@ -16,7 +16,7 @@ consonants = ["AH", "r", "g", "y",
 "x", "T", "n",
 "d", "Z", "h", 
 "TH", "E", "w", "^",
-"AHAH", "rr", "gg", "yy",
+"AHAH", "rr", "gg", "yy", "AhAh",
 "bb", "zz", "ff", "vv",
 "tt", "ss", "qq", "pp",
 "SHSH", "kk", "GG",
@@ -34,13 +34,13 @@ vowels = ["aa", "A", "UU1", "II1",
 ]
 pause = ["sil", "sp"
 ]
-phones = consonants + vowels
+phones = consonants + vowels + ["", "-", "DIST", "Dist", "dist"]
 allSymbols = phones + pause
 stopsVoiced = ["b", "d", "D", "G", "J",
 "bb", "dd", "DD", "GG", "JJ"
 ]
-stopsVoiceless = ["p", "t", "T", "AH", "k", "q",
-"pp", "tt", "TT", "AHAH", "kk", "qq"
+stopsVoiceless = ["p", "t", "T", "AH", "k", "q", "Ah",
+"pp", "tt", "TT", "AHAH", "kk", "qq", "AhAh"
 ]
 stops = stopsVoiced + stopsVoiceless
 fricVoiced = ["v", "TH", "z", "Z", "j", "g", "E",
@@ -85,17 +85,23 @@ for file in glob.glob(os.path.join(orgDir, '*.TextGrid')): #Read Original bounda
 	
 	xmax = None
 	for line in fileHandle:
-		line = re.sub(' ', '', line)
+		line = re.sub('Ah', 'AH', line)
 		line = re.sub('\t', '', line)
 		line = re.sub('\n', '', line)
 		line = re.sub('\r', '', line)
 		line = re.sub('"', '', line)
 		line = re.sub('\'', '', line)
 		line = line.split('=')
+		for i in range(0, len(line)):
+			line[i] = line[i].strip()
 		if(len(line) == 2 and line[0] == 'xmax'):
 			xmax = float(line[1])
-		if(len(line) == 2 and line[0] == 'text' and line[1] in allSymbols and xmax != None):
-			org[fileName].append((line[1].strip('"\''), xmax))
+		if(len(line) == 2 and line[0] == 'text' and xmax != None):
+			label = line[1].strip('"\'').strip()
+			if(len(label) > 4):
+				label = label[0:3].strip()
+		if(len(line) == 2 and line[0] == 'text' and label in allSymbols and xmax != None):
+			org[fileName].append((label, xmax))
 			xmax = None
 	fileHandle.close()
 
@@ -109,17 +115,23 @@ for file in glob.glob(os.path.join(corDir, '*.TextGrid')): #Read corrected bound
 	
 	xmax = None
 	for line in fileHandle:
-		line = re.sub(' ', '', line)
+		line = re.sub('Ah', 'AH', line)
 		line = re.sub('\t', '', line)
 		line = re.sub('\n', '', line)
 		line = re.sub('\r', '', line)
 		line = re.sub('"', '', line)
 		line = re.sub('\'', '', line)
 		line = line.split('=')
+		for i in range(0, len(line)):
+			line[i] = line[i].strip()
 		if(len(line) == 2 and line[0] == 'xmax'):
 			xmax = float(line[1])
-		if(len(line) == 2 and line[0] == 'text' and line[1] in allSymbols and xmax != None):
-			cor[fileName].append((line[1].strip('"\''), xmax))
+		if(len(line) == 2 and line[0] == 'text' and xmax != None):
+			label = line[1].strip('"\'')
+			if(len(label) > 4):
+				label = label[0:3].strip()
+		if(len(line) == 2 and line[0] == 'text' and label in allSymbols and xmax != None):
+			cor[fileName].append((label, xmax))
 			xmax = None
 	fileHandle.close()
 
@@ -128,6 +140,11 @@ for file in glob.glob(os.path.join(corDir, '*.TextGrid')): #Read corrected bound
 #--------------------------------------------------------------------------------------------------------------------------
 skips = 0
 total = 0
+insertions = 0
+deletions = 0
+hasSkipped = False
+diff = 0
+alt = 0
 for fileName in cor: #Start calculating histograms
 	if(fileName in org):
 		orgUtt = org[fileName]
@@ -135,7 +152,6 @@ for fileName in cor: #Start calculating histograms
 		orgPos = 0
 		corPos = 0
 		while orgPos < len(orgUtt) - 1 and corPos < len(corUtt) - 1:
-			#print orgUtt[orgPos]
 			delta = orgUtt[orgPos][1] - corUtt[corPos][1]
 			if(orgUtt[orgPos][0] == corUtt[corPos][0] and orgUtt[orgPos + 1][0] == corUtt[corPos + 1][0]):
 				for type1 in types: #For all boundary types, add the delta to the statistics
@@ -154,7 +170,19 @@ for fileName in cor: #Start calculating histograms
 								for i in range(index, len(histos[type1 + "-" + type2])):
 									histos[type1 + "-" + type2][i] += 1
 							else: #All boundaries greater than a certain threshold are added to the last entry of the histogram. This is determined by the length of the list (see if statement above)
-								histos[type1 + "-" + type2][-1] += 1	
+								histos[type1 + "-" + type2][-1] += 1
+				
+				if(hasSkipped and (corPos - orgPos - diff) < 0):
+					deletions += math.fabs(corPos - orgPos - diff)
+					print "deletion. Indexes: " + str(orgPos) + " " + orgUtt[orgPos][0] + " " + str(corPos) + " " + corUtt[corPos - 1][0]
+					hasSkipped = False
+					diff = corPos - orgPos
+				if(hasSkipped and (corPos - orgPos - diff) > 0):
+					insertions += math.fabs(corPos - orgPos - diff)
+					print "insertions. Indexes: " + str(orgPos) + " " + orgUtt[orgPos][0] + " " + str(corPos) + " " + corUtt[corPos - 1][0]
+					hasSkipped = False
+					diff = corPos - orgPos
+					alt -= 1
 				total += 1
 				orgPos += 1
 				corPos += 1
@@ -163,17 +191,17 @@ for fileName in cor: #Start calculating histograms
 				corPos += 1
 				total += 1
 				skips += 1
-				print "skip corPos: " + str(corUtt[corPos][0]) + " orgPos: " + str(orgUtt[orgPos][0]) + " in " + fileName
-				print "skip corPos: " + str(corUtt[corPos + 1][0]) + " orgPos: " + str(orgUtt[orgPos + 1][0]) + " in " + fileName
 			else: #Increase corrected or the original Pointer to try and regain alignment if lost due to changes
 				if delta > 0:
 					corPos += 1
 					skips += 1
+					alt += 1
+					print "Potential Alteration (if not followed bu and insertion). Indexes: " + str(orgPos) + " " + orgUtt[orgPos][0] + " " + str(corPos) + " " + corUtt[corPos - 1][0]
 					total += 1
-					print "skip corPos: " + str(corUtt[corPos][0]) + " orgPos: " + str(orgUtt[orgPos][0]) + " in " + fileName
-					print "skip corPos: " + str(corUtt[corPos + 1][0]) + " orgPos: " + str(orgUtt[orgPos + 1][0]) + " in " + fileName
+					hasSkipped = True
 				else:
 					orgPos += 1
+					hasSkipped = True
 #--------------------------------------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------------------
 #Print result out----------------------------------------------------------------------------------------------------------------
@@ -197,4 +225,7 @@ f.write(res)
 f.close()
 
 print str(skips) + " skips"
+print str(alt) + " alts"
 print str(total) + " phones"
+print str(insertions) + " Insertions"
+print str(deletions) + " Deletions"
