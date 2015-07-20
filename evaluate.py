@@ -34,7 +34,7 @@ vowels = ["aa", "A", "UU1", "II1",
 ]
 pause = ["sil", "sp"
 ]
-phones = consonants + vowels + ["", "-", "DIST", "Dist", "dist"]
+phones = consonants + vowels#+ ["", "-", "DIST", "Dist", "dist"]
 allSymbols = phones + pause
 stopsVoiced = ["b", "d", "D", "G", "J",
 "bb", "dd", "DD", "GG", "JJ"
@@ -174,12 +174,12 @@ for fileName in cor: #Start calculating histograms
 				
 				if(hasSkipped and (corPos - orgPos - diff) < 0):
 					deletions += math.fabs(corPos - orgPos - diff)
-					print "deletion. Indexes: " + str(orgPos) + " " + orgUtt[orgPos][0] + " " + str(corPos) + " " + corUtt[corPos - 1][0]
+					print "deletion. Indexes: " + str(orgPos) + " " + orgUtt[orgPos][0] + " " + str(corPos) + " " + corUtt[corPos - 1][0] + " in " + fileName 
 					hasSkipped = False
 					diff = corPos - orgPos
 				if(hasSkipped and (corPos - orgPos - diff) > 0):
 					insertions += math.fabs(corPos - orgPos - diff)
-					print "insertions. Indexes: " + str(orgPos) + " " + orgUtt[orgPos][0] + " " + str(corPos) + " " + corUtt[corPos - 1][0]
+					print "insertions. Indexes: " + str(orgPos) + " " + orgUtt[orgPos][0] + " " + str(corPos) + " " + corUtt[corPos - 1][0] + " in " + fileName 
 					hasSkipped = False
 					diff = corPos - orgPos
 					alt -= 1
@@ -193,10 +193,10 @@ for fileName in cor: #Start calculating histograms
 				skips += 1
 			else: #Increase corrected or the original Pointer to try and regain alignment if lost due to changes
 				if delta > 0:
+					print "Potential Alteration (if not followed bu and insertion). Indexes: " + str(orgPos) + " " + orgUtt[orgPos][0] + " " + str(corPos) + " " + corUtt[corPos - 1][0] + " in " + fileName 
 					corPos += 1
 					skips += 1
 					alt += 1
-					print "Potential Alteration (if not followed bu and insertion). Indexes: " + str(orgPos) + " " + orgUtt[orgPos][0] + " " + str(corPos) + " " + corUtt[corPos - 1][0]
 					total += 1
 					hasSkipped = True
 				else:
