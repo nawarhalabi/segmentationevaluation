@@ -63,6 +63,7 @@ approx = ["w", "y", "l",
 types = {"phones": phones, "consonants" : consonants, "vowels": vowels, "stops": stops, "stopsVoiced": stopsVoiced, "stopsVoiceless": stopsVoiceless, "fric": fric, "fricVoiced": fricVoiced, "fricVoiceless": fricVoiceless, "nasals": nasals, "trill": trill, "approx": approx, "pause": pause}
 
 dir = sys.argv[1] #Text Grids are here
+dest = sys.argv[2] #dest directory for results
 prevType = ""
 curType = ""
 subs = 0
@@ -93,8 +94,8 @@ for file in glob.glob(os.path.join(dir, '*.TextGrid')): #Read Original boundarie
 					if(key == "xmin"):
 						#convert seconds to 100ns for boundaries
 						curTime = val.strip('"')
-						forward = str(float(val.strip('"')) + 0.01)
-						backward = str(float(val.strip('"')) - 0.01)
+						forward = str(float(val.strip('"')) + 0.007)
+						backward = str(float(val.strip('"')) - 0.007)
 					elif(key == "text"):
 						#get the boundaries' labels and types
 						curLabel = val.strip('"')
@@ -121,9 +122,9 @@ for file in glob.glob(os.path.join(dir, '*.TextGrid')): #Read Original boundarie
 	for i in range(0, len(toReplace)):
 		subs += 1
 		print("subbing " + toReplace[i][0] + " with " + toReplace[i][1])
-		res = re.sub(toReplace[i][0], toReplace[i][1], res)
-		
-	newFileHandle = open(file.split(".")[0] + "-subbed.TextGrid" , 'w');
+		res = re.sub(" " + toReplace[i][0], " " + toReplace[i][1], res)
+	print(file.split('\\'))
+	newFileHandle = open(dest + "/" + file.split('\\')[1], 'w');
 	newFileHandle.write(res)
 	
 	newFileHandle.close()
